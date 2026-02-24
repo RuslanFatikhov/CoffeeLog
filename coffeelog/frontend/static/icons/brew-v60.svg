@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="88" height="88" viewBox="0 0 88 88" fill="none">
+  <rect width="88" height="88" rx="24" fill="#E8F0EF"/>
+  <path d="M28 28H60L50 56H38L28 28Z" fill="#3A6B66"/>
+  <path d="M34 38H54L52 43H36L34 38Z" fill="#6FA69E"/>
+  <path d="M36 56H52V60H36V56Z" fill="#214641"/>
+  <text x="44" y="78" text-anchor="middle" font-size="10" font-family="Arial, sans-serif" fill="#214641">V60</text>
+</svg>

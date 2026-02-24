@@ -1,0 +1,14 @@
+<section class="form-section  p16 gap8 vstack">
+
+  <label class="muted" for="photos">Add photos (max 5, JPEG/PNG/HEIF)</label>
+  <input
+    id="photos"
+    name="photos"
+    type="file"
+    accept="image/jpeg,image/png,image/heif,image/heic,.heif,.heic"
+    multiple
+    capture="environment"
+  />
+  
+  <div id="photo-preview" class="photo-grid" aria-live="polite"></div>
+</section>

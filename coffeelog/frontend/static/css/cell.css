@@ -1,0 +1,65 @@
+.brew-time-cell {
+  cursor: pointer;
+}
+
+.metric-cell {
+  cursor: pointer;
+}
+
+.form-cell {
+  display: flex;
+  flex-direction: row;
+  max-height: var(--spacer-54);
+  align-items: center;
+  border-bottom: 0.25px solid var(--black030);
+  padding: var(--spacer-16);
+  background: var(--surface);
+}
+
+.form-cell input {
+  background: transparent;
+}
+
+.form-cell:last-child {
+  border-bottom: 0;
+}
+
+.cells-group{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-radius: var(--spacer-16);
+  overflow: hidden;
+  background: var(--surface);
+  min-height: 72px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0px;
+  text-decoration: none;
+  height: 72px;
+  border-bottom: 0.25px solid var(--black030);
+  gap: var(--spacer-4);
+}
+
+.card:last-child {
+  border-bottom: 0;
+}
+
+.card h3 {
+  font-weight: 500;
+  font-size: var(--spacer-16);
+  color: var(--black100);
+  padding-left: var(--spacer-16);
+}
+
+.card p {
+  padding-left: var(--spacer-16);
+  font-size: var(--spacer-16);
+  height: 24px;
+  color: var(--muted);
+  margin: 0;
+}

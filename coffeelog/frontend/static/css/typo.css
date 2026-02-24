@@ -1,0 +1,56 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap");
+
+
+html, textarea, input, button {
+    font-family: "Inter", sans-serif;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+}
+
+a{text-decoration: none !important;}
+
+h1 {
+  font-size: var(--spacer-32);
+  line-height: var(--spacer-32);
+}
+
+h2{
+  font-size: var(--spacer-24);
+  line-height: var(--spacer-24);
+  margin-bottom: var(--spacer-12);
+}
+
+.fs24{
+  font-size: var(--spacer-24) !important;
+  line-height: var(--spacer-32) !important;
+  text-decoration: none !important;
+}
+
+header h2{
+  margin-bottom: 0px !important;
+}
+
+.subtitle {
+  color: var(--muted);
+  font-size: var(--spacer-12);
+  line-height: var(--spacer-16);
+}
+
+.tac{
+  text-align: center;
+}
+
+.fw600{
+  font-weight: 600;
+}
+
+.h2_label{
+  padding-top: var(--spacer-16);
+  padding-bottom: var(--spacer-12);
+}
+
+.fw700{font-weight: 700;}

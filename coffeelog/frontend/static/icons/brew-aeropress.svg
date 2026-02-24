@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="88" height="88" viewBox="0 0 88 88" fill="none">
+  <rect width="88" height="88" rx="24" fill="#E8EAF1"/>
+  <rect x="33" y="24" width="22" height="8" rx="2" fill="#586B9E"/>
+  <rect x="36" y="32" width="16" height="22" rx="3" fill="#2E406E"/>
+  <rect x="34" y="54" width="20" height="5" rx="2" fill="#8798C2"/>
+  <path d="M40 60H48L50 64H38L40 60Z" fill="#1E2D4F"/>
+  <text x="44" y="78" text-anchor="middle" font-size="9" font-family="Arial, sans-serif" fill="#1E2D4F">AERO</text>
+</svg>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="88" height="88" viewBox="0 0 88 88" fill="none">
+  <rect width="88" height="88" rx="24" fill="#F1EDE7"/>
+  <path d="M24 47C24 43.6863 26.6863 41 30 41H56V54H30C26.6863 54 24 51.3137 24 48V47Z" fill="#7D5A42"/>
+  <path d="M56 44H60C63.866 44 67 47.134 67 51V54H56V44Z" fill="#A37757"/>
+  <path d="M30 54H61V58H30V54Z" fill="#4A3325"/>
+  <path d="M36 33H52V36H36V33Z" fill="#4A3325"/>
+  <path d="M41 28H47V33H41V28Z" fill="#4A3325"/>
+  <text x="44" y="78" text-anchor="middle" font-size="9" font-family="Arial, sans-serif" fill="#4A3325">CUP</text>
+</svg>

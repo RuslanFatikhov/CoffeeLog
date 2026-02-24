@@ -1,0 +1,18 @@
+<form id="create-form">
+  <div data-step-screen data-step-title="Coffee & Brew">
+    {% include "components/forms/coffee_section.html" %}
+    {% include "components/forms/brew_section.html" %}
+  </div>
+    <div data-step-screen data-step-title="Taste">
+      {% include "components/forms/taste_section.html" %}
+    </div>
+    <div data-step-screen data-step-title="Evaluation">
+      {% include "components/forms/evaluation_section.html" %}
+    </div>
+    <div data-step-screen data-step-title="Photos & Notes">
+      {% include "components/forms/notes_section.html" %}
+      {% include "components/forms/photos_section.html" %}
+    </div>
+    {% include "components/forms/form_actions.html" %}
+  </form>
+

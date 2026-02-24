@@ -1,0 +1,155 @@
+<section class="form-section">
+  <div class="form-grid">
+
+    <div class="form-cell">
+      <label for="brew_method">Brew method</label>
+      <input id="brew_method" name="brew_method" type="hidden" />
+      <button type="button" class="brew-method-trigger" data-brew-sheet-open aria-haspopup="dialog" aria-expanded="false">
+        <span class="brew-method-trigger-text" data-brew-selected-label>Select</span>
+      </button>
+      <div class="brew-sheet" data-brew-sheet hidden>
+        <button type="button" class="brew-sheet-backdrop" data-brew-sheet-close aria-label="Close brew method picker"></button>
+        <div class="brew-sheet-panel" role="dialog" aria-modal="true" aria-label="Select brew method">
+          <div class="brew-sheet-header">
+            <h3>Choose Brew Method</h3>
+            <button type="button" class="btn_icon primary" data-brew-sheet-close aria-label="Close">
+              <img src="/static/icons/cross.svg" alt="" />
+            </button>
+          </div>
+          <div class="brew-method-options" data-brew-options></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-cell">
+      <label for="grind_size">Grind size</label>
+      <select id="grind_size" name="grind_size">
+        <option value="">Select</option>
+      </select>
+    </div>
+
+    <div
+      class="form-cell metric-cell"
+      data-metric-field="water_temp"
+      data-metric-label="Water temp"
+      data-metric-unit="°C"
+      data-metric-min="80"
+      data-metric-max="100"
+      data-metric-step="0.5"
+      data-metric-default="92"
+      data-metric-major="5"
+    >
+      <label for="water_temp">Water temp</label>
+      <input id="water_temp" name="water_temp" type="hidden" />
+      <button type="button" class="metric-trigger" data-metric-open="water_temp" aria-haspopup="dialog" aria-expanded="false">
+        <span class="metric-trigger-text" data-metric-value-for="water_temp">Select</span>
+      </button>
+    </div>
+
+    <div
+      class="form-cell metric-cell"
+      data-metric-field="dose"
+      data-metric-label="Dose"
+      data-metric-unit="g"
+      data-metric-min="10"
+      data-metric-max="30"
+      data-metric-step="0.1"
+      data-metric-default="18"
+      data-metric-major="5"
+    >
+      <label for="dose">Dose</label>
+      <input id="dose" name="dose" type="hidden" />
+      <button type="button" class="metric-trigger" data-metric-open="dose" aria-haspopup="dialog" aria-expanded="false">
+        <span class="metric-trigger-text" data-metric-value-for="dose">Select</span>
+      </button>
+    </div>
+
+    <div
+      class="form-cell metric-cell"
+      data-metric-field="yield"
+      data-metric-label="Yield"
+      data-metric-unit="g"
+      data-metric-min="20"
+      data-metric-max="60"
+      data-metric-step="0.5"
+      data-metric-default="36"
+      data-metric-major="10"
+    >
+      <label for="yield">Yield</label>
+      <input id="yield" name="yield" type="hidden" />
+      <button type="button" class="metric-trigger" data-metric-open="yield" aria-haspopup="dialog" aria-expanded="false">
+        <span class="metric-trigger-text" data-metric-value-for="yield">Select</span>
+      </button>
+    </div>
+
+    <div class="form-cell brew-time-cell" data-brew-time-open-cell>
+      <label for="brew_time">Brew time</label>
+      <input id="brew_time" name="brew_time" type="hidden" />
+      <button type="button" class="brew-time-trigger" data-brew-time-open aria-haspopup="dialog" aria-expanded="false">
+        <span class="brew-time-trigger-text" data-brew-time-label>Select min/sec</span>
+      </button>
+      <div class="time-sheet" data-brew-time-sheet hidden>
+        <button type="button" class="time-sheet-backdrop" data-brew-time-close aria-label="Close brew time picker"></button>
+        <div class="time-sheet-panel" role="dialog" aria-modal="true" aria-label="Select brew time">
+          <div class="time-sheet-header">
+            <h3>Brew time</h3>
+            <button type="button" class="btn_icon primary" data-brew-time-close aria-label="Close">
+              <img src="/static/icons/cross.svg" alt="" />
+            </button>
+          </div>
+          <div class="time-picker">
+            <div class="time-picker-selection"></div>
+            <div class="time-wheel-column">
+              <div class="time-wheel" data-time-wheel="min" aria-label="Minutes"></div>
+              <span class="time-wheel-unit">min</span>
+            </div>
+            <div class="time-wheel-column">
+              <div class="time-wheel" data-time-wheel="sec" aria-label="Seconds"></div>
+              <span class="time-wheel-unit">sec</span>
+            </div>
+          </div>
+
+          <div class="p16">
+            <button type="button" class="primary-invert brew-time-apply" data-brew-time-apply>
+              <span class="fs24">Apply</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="metric-sheet" data-metric-sheet hidden>
+      <button type="button" class="metric-sheet-backdrop" data-metric-close aria-label="Close value picker"></button>
+      <div class="metric-sheet-panel" role="dialog" aria-modal="true" aria-label="Select value">
+        <div class="metric-sheet-header">
+          <h3 data-metric-title>Value</h3>
+          <button type="button" class="btn_icon primary" data-metric-close aria-label="Close">
+            <img src="/static/icons/cross.svg" alt="" />
+          </button>
+        </div>
+
+        <div class="metric-center">
+          <button type="button" class="metric-display" data-metric-display>
+            <span data-metric-display-value>0</span>
+            <span data-metric-display-unit>g</span>
+          </button>
+          <input type="number" class="metric-editor" data-metric-editor hidden disabled />
+        </div>
+
+        <div class="metric-arc" data-metric-arc>
+          <div class="metric-scale-viewport" data-metric-viewport>
+            <div class="metric-scale-track" data-metric-track></div>
+          </div>
+          <div class="metric-scale-center-dot"></div>
+        </div>
+
+        <div class="p16">
+          <button type="button" class="primary-invert metric-apply" data-metric-apply>
+            <span class="fs24">Apply</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>

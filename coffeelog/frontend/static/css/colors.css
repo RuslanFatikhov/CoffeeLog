@@ -1,0 +1,24 @@
+:root {
+  --bg: #F2F7F9;
+  --surface: #fefefe;
+  
+  
+  --muted: #cccccc;
+  --border: #f2f2f2;
+  --accent: #334CDB;
+  --accent-strong: #0a1ded;
+  --danger: #ff0044;
+  --ok: #38ac3a;
+
+  --gray015: rgba(120, 120, 128, 0.15);
+
+  --black100: #121212;
+  --black030: rgba(5, 20, 40, 0.3);
+
+  --white100:#fefefe;
+  --white060: rgba(254, 254, 254, 0.6);
+  --white030: rgba(254, 254, 254, 0.3);
+}
+
+.black100{color: var(--black100) !important;}
+.muted{color: var(--muted) !important;}

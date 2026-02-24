@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en" data-app-version="{{ app_version }}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ page_title }}</title>
+    <meta name="theme-color" content="#72513a" />
+    <link rel="manifest" href="/manifest.json?v={{ app_version }}" />
+    <link rel="stylesheet" href="/static/css/styles.css?v={{ app_version }}" />
+    <link rel="stylesheet" href="/static/css/cell.css?v={{ app_version }}" />
+    <link rel="stylesheet" href="/static/css/colors.css?v={{ app_version }}" />
+    <link rel="stylesheet" href="/static/css/typo.css?v={{ app_version }}" />
+    <script type="importmap">
+      {
+        "imports": {
+          "#idb": "/static/js/idb.js?v={{ app_version }}"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      {% block page_header %}{% endblock %}
+      {% block page_nav %}{% endblock %}
+      {% block page_content %}{% endblock %}
+    </div>
+
+    <script type="module" src="/static/js/app.js?v={{ app_version }}"></script>
+    {% block extra_scripts %}{% endblock %}
+  </body>
+</html>

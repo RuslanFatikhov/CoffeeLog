@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="88" height="88" viewBox="0 0 88 88" fill="none">
+  <rect width="88" height="88" rx="24" fill="#F4E9DE"/>
+  <path d="M24 49C24 45.6863 26.6863 43 30 43H57V56H30C26.6863 56 24 53.3137 24 50V49Z" fill="#72513A"/>
+  <path d="M57 46H61C64.866 46 68 49.134 68 53V56H57V46Z" fill="#9C6E4E"/>
+  <path d="M30 56H62V60H30V56Z" fill="#3A261B"/>
+  <path d="M38 28C38 30.2091 36.2091 32 34 32V35C37.866 35 41 31.866 41 28H38Z" fill="#9C6E4E"/>
+  <path d="M46 28C46 30.2091 44.2091 32 42 32V35C45.866 35 49 31.866 49 28H46Z" fill="#9C6E4E"/>
+  <text x="44" y="78" text-anchor="middle" font-size="10" font-family="Arial, sans-serif" fill="#3A261B">ESP</text>
+</svg>

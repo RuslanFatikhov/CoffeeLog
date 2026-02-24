@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="88" height="88" viewBox="0 0 88 88" fill="none">
+  <rect width="88" height="88" rx="24" fill="#F2ECE3"/>
+  <path d="M32 24H56L52 38L57 58H31L36 38L32 24Z" fill="#8D6B4D"/>
+  <path d="M36 40H52L54 48H34L36 40Z" fill="#C39A73"/>
+  <rect x="39" y="34" width="10" height="20" rx="2" fill="#5C402B"/>
+  <text x="44" y="78" text-anchor="middle" font-size="9" font-family="Arial, sans-serif" fill="#5C402B">CHMX</text>
+</svg>

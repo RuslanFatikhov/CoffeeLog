@@ -1,0 +1,26 @@
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+:root {
+  --spacer-4: 4px;
+  --spacer-8: 8px;
+  --spacer-12: 12px;
+  --spacer-16: 16px;
+  --spacer-24: 24px;
+  --spacer-32: 32px;
+  --spacer-48: 48px;
+  --spacer-54: 54px;
+  --spacer-64: 64px;
+  --spacer-100: 100px;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--black100);
+}

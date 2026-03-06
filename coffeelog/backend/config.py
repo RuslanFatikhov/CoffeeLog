@@ -35,6 +35,7 @@ class Settings:
     google_redirect_uri: str
     session_secret: str
     base_url: str
+    dev_login_enabled: bool
 
     @property
     def cookie_secure(self) -> bool:
@@ -48,6 +49,13 @@ def _required_env(name: str) -> str:
     return raw
 
 
+def _bool_env(name: str, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     load_environment()
@@ -57,31 +65,33 @@ def get_settings() -> Settings:
     google_redirect_uri = _required_env("GOOGLE_REDIRECT_URI")
     session_secret = _required_env("SESSION_SECRET")
     base_url = _required_env("BASE_URL") or "http://localhost:8000"
+    dev_login_enabled = _bool_env("DEV_LOGIN_ENABLED", default=True)
 
-    if not google_client_id or not google_client_secret:
+    if (not google_client_id or not google_client_secret) and not dev_login_enabled:
         raise RuntimeError(
-            "Missing GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET. Check .env location and load_dotenv call."
+            "Missing GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET. "
+            "Set real credentials or enable DEV_LOGIN_ENABLED=1 for local debug login."
         )
 
-    if ".apps.googleusercontent.com" not in google_client_id:
+    if google_client_id and ".apps.googleusercontent.com" not in google_client_id:
         raise RuntimeError(
             "Invalid GOOGLE_CLIENT_ID format. Expected *.apps.googleusercontent.com. "
             "Check .env location and load_dotenv call."
         )
 
-    if "your-google-client-id" in google_client_id:
+    if google_client_id and "your-google-client-id" in google_client_id and not dev_login_enabled:
         raise RuntimeError(
             "GOOGLE_CLIENT_ID looks like a placeholder. Put real credentials in .env "
             "(project root or .venv/.env)."
         )
 
-    if "your-google-client-secret" in google_client_secret:
+    if google_client_secret and "your-google-client-secret" in google_client_secret and not dev_login_enabled:
         raise RuntimeError(
             "GOOGLE_CLIENT_SECRET looks like a placeholder. Put real credentials in .env "
             "(project root or .venv/.env)."
         )
 
-    if not google_redirect_uri:
+    if not google_redirect_uri and not dev_login_enabled:
         raise RuntimeError("Missing GOOGLE_REDIRECT_URI. Check .env location and load_dotenv call.")
 
     if not session_secret:
@@ -93,4 +103,5 @@ def get_settings() -> Settings:
         google_redirect_uri=google_redirect_uri,
         session_secret=session_secret,
         base_url=base_url,
+        dev_login_enabled=dev_login_enabled,
     )

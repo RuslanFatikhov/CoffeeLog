@@ -10,7 +10,7 @@
   --danger: #ff0044;
   --ok: #38ac3a;
 
-  --gray015: rgba(120, 120, 128, 0.15);
+  --black015: rgba(120, 120, 128, 0.15);
 
   --black100: #121212;
   --black030: rgba(5, 20, 40, 0.3);
@@ -22,3 +22,4 @@
 
 .black100{color: var(--black100) !important;}
 .muted{color: var(--muted) !important;}
+.accent-bg{background: var(--accent); height: 100vh;}

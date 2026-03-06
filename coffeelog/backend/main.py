@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BASE_DIR / "frontend"
 TEMPLATES_DIR = FRONTEND_DIR / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
-APP_VERSION = "0.26"
+APP_VERSION = "1.1.30"
 templates.env.globals["app_version"] = APP_VERSION
 logger = logging.getLogger("coffeelog.auth")
 logger.setLevel(logging.INFO)
@@ -52,7 +52,7 @@ def is_authenticated(request: Request) -> bool:
     return bool(request.session.get("user_id") and request.session.get("google_sub"))
 
 
-app = FastAPI(title="CoffeeLog")
+app = FastAPI(title="Sipp")
 app.add_middleware(
     SessionMiddleware,
     secret_key=settings.session_secret,
@@ -78,10 +78,11 @@ def login_page(request: Request):
         "pages/login.html",
         {
             "request": request,
-            "page_title": "Login - CoffeeLog",
-            "header_title": "CoffeeLog",
+            "page_title": "Login - Sipp",
+            "header_title": "Sipp",
             "header_subtitle": "Sign in",
             "header_show_status": False,
+            "dev_login_enabled": settings.dev_login_enabled,
         },
     )
 
@@ -89,10 +90,10 @@ def login_page(request: Request):
 @app.get("/auth/google/start", include_in_schema=False)
 def auth_google_start(request: Request):
     config = get_google_config()
-    if not config.client_id:
+    if not config.client_id or not config.client_secret or not config.redirect_uri:
         raise HTTPException(
             status_code=500,
-            detail="GOOGLE_CLIENT_ID is empty. Check .env location and load_dotenv call.",
+            detail="Google OAuth is not configured. Set GOOGLE_* env vars or use /auth/dev-login for local debug.",
         )
 
     client_id_len, client_id_first, client_id_last = _client_id_debug(config.client_id)
@@ -114,6 +115,37 @@ def auth_google_start(request: Request):
     authorize_url = build_authorize_url(config=config, state=state, nonce=nonce)
     logger.info("Google OAuth authorize URL: %s", authorize_url)
     return RedirectResponse(authorize_url, status_code=302)
+
+
+@app.get("/auth/dev-login", include_in_schema=False)
+def auth_dev_login(request: Request, session: Session = Depends(get_session)):
+    if not settings.dev_login_enabled:
+        raise HTTPException(status_code=404, detail="Dev login is disabled")
+
+    google_sub = "dev-debug-user"
+    email = "dev@local.coffeelog"
+    name = "Debug User"
+
+    user = session.execute(select(UserRecord).where(UserRecord.google_sub == google_sub)).scalar_one_or_none()
+    if user:
+        user.email = email
+        user.name = name
+        user.avatar_url = None
+    else:
+        user = UserRecord(
+            google_sub=google_sub,
+            email=email,
+            name=name,
+            avatar_url=None,
+        )
+        session.add(user)
+
+    session.commit()
+    session.refresh(user)
+
+    request.session["user_id"] = user.id
+    request.session["google_sub"] = user.google_sub
+    return RedirectResponse("/", status_code=302)
 
 
 @app.get("/auth/google/callback", include_in_schema=False)
@@ -179,7 +211,7 @@ async def auth_google_callback(request: Request, session: Session = Depends(get_
 
     request.session["user_id"] = user.id
     request.session["google_sub"] = user.google_sub
-    return RedirectResponse("/settings", status_code=302)
+    return RedirectResponse("/", status_code=302)
 
 
 @app.api_route("/logout", methods=["GET", "POST"], include_in_schema=False)
@@ -201,8 +233,8 @@ def index(request: Request):
         "pages/index.html",
         {
             "request": request,
-            "page_title": "CoffeeLog",
-            "header_title": "CoffeeLog",
+            "page_title": "Sipp",
+            "header_title": "Sipp",
             "header_subtitle": "Private coffee journal",
             "header_show_status": True,
         },
@@ -217,7 +249,7 @@ def create_page(request: Request):
         "pages/create.html",
         {
             "request": request,
-            "page_title": "New log - CoffeeLog",
+            "page_title": "New log - Sipp",
             "header_title": "Coffee",
             "header_subtitle": "Capture brew and tasting details",
             "header_show_status": False,
@@ -233,7 +265,7 @@ def view_page(request: Request):
         "pages/view.html",
         {
             "request": request,
-            "page_title": "View Entry - CoffeeLog",
+            "page_title": "View Entry - Sipp",
             "header_title": "Entry Details",
             "header_subtitle": "Read-only coffee log entry",
             "header_show_status": False,
@@ -256,7 +288,7 @@ def settings_page(request: Request, session: Session = Depends(get_session)):
         "pages/settings.html",
         {
             "request": request,
-            "page_title": "Settings - CoffeeLog",
+            "page_title": "Settings - Sipp",
             "header_title": "Settings",
             "header_subtitle": "Offline and sync controls",
             "header_show_status": False,

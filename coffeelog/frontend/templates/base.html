@@ -6,10 +6,15 @@
     <title>{{ page_title }}</title>
     <meta name="theme-color" content="#72513a" />
     <link rel="manifest" href="/manifest.json?v={{ app_version }}" />
-    <link rel="stylesheet" href="/static/css/styles.css?v={{ app_version }}" />
-    <link rel="stylesheet" href="/static/css/cell.css?v={{ app_version }}" />
+    <link rel="stylesheet" href="/static/css/root.css?v={{ app_version }}" />
     <link rel="stylesheet" href="/static/css/colors.css?v={{ app_version }}" />
     <link rel="stylesheet" href="/static/css/typo.css?v={{ app_version }}" />
+    <link rel="stylesheet" href="/static/css/cell.css?v={{ app_version }}" />
+    <link rel="stylesheet" href="/static/css/layout.css?v={{ app_version }}" />
+    <link rel="stylesheet" href="/static/css/button.css?v={{ app_version }}" />
+    <link rel="stylesheet" href="/static/css/forms.css?v={{ app_version }}" />
+    <link rel="stylesheet" href="/static/css/styles.css?v={{ app_version }}" />
+    <link rel="stylesheet" href="/static/css/wheel.css?v={{ app_version }}" />
     <script type="importmap">
       {
         "imports": {
@@ -20,6 +25,14 @@
   </head>
   <body>
     <div class="container">
+      <div class="top_corner">
+        <img src="/static/corner-tl.svg">
+        <img src="/static/corner-tr.svg">
+      </div>
+      <div class="bottom_corner">
+        <img src="/static/corner-bl.svg">
+        <img src="/static/corner-br.svg">
+      </div>
       {% block page_header %}{% endblock %}
       {% block page_nav %}{% endblock %}
       {% block page_content %}{% endblock %}

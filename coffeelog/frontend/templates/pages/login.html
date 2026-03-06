@@ -3,8 +3,11 @@
 {% block page_content %}
 <section class="form-section">
   <div class="p16 vstack gap8 aic jcc">
-    <h2>Login</h2>
-    <a class="primary-invert" href="/auth/google/start">Continue with Google</a>
+    <h2 data-i18n="login.title">Login</h2>
+    <a class="primary-invert" href="/auth/google/start" data-i18n="login.continue_google">Continue with Google</a>
+    {% if dev_login_enabled %}
+    <a class="ghost" href="/auth/dev-login" data-i18n="login.debug_login">Debug login (no Google)</a>
+    {% endif %}
   </div>
 </section>
 {% endblock %}

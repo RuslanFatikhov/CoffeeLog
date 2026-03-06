@@ -1,18 +1,17 @@
 <form id="create-form">
-  <div data-step-screen data-step-title="Coffee & Brew">
+  <div data-step-screen data-step-title="Coffee & Brew" data-step-title-key="create.step.coffee_brew">
     {% include "components/forms/coffee_section.html" %}
     {% include "components/forms/brew_section.html" %}
   </div>
-    <div data-step-screen data-step-title="Taste">
-      {% include "components/forms/taste_section.html" %}
-    </div>
-    <div data-step-screen data-step-title="Evaluation">
-      {% include "components/forms/evaluation_section.html" %}
-    </div>
-    <div data-step-screen data-step-title="Photos & Notes">
-      {% include "components/forms/notes_section.html" %}
-      {% include "components/forms/photos_section.html" %}
-    </div>
-    {% include "components/forms/form_actions.html" %}
-  </form>
-
+  <div data-step-screen data-step-title="Evaluation" data-step-title-key="create.step.evaluation">
+    {% include "components/forms/evaluation_section.html" %}
+  </div>
+  <div data-step-screen data-step-title="Wheel" data-step-title-key="create.step.wheel">
+    {% include "components/forms/wheel_section.html" %}
+  </div>
+  <div data-step-screen data-step-title="Photos & Notes" data-step-title-key="create.step.photos_notes">
+    {% include "components/forms/notes_section.html" %}
+    {% include "components/forms/photos_section.html" %}
+  </div>
+  {% include "components/forms/form_actions.html" %}
+</form>

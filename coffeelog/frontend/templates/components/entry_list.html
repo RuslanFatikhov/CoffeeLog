@@ -1,2 +1,39 @@
-<div id="sync-message" class="inline-message" hidden></div>
-<div class="cells-group" id="entry-list"></div>
+
+
+<div class="service">
+  <button class="service_button">
+    <img src="/static/icons/brew-method/espresso-a.png">
+    <p>Cup</p>
+  </button>
+
+  <button class="service_button">
+    <img src="/static/icons/brew-method/v60-a.png">
+    <p>Brew</p>
+  </button>
+
+
+
+</div>
+<span class="spacer250"></span>
+<div class="island">
+    <h2 class="island_heading" data-i18n="history.title">History</h2>
+    <div class="cells-group" id="entry-list"></div>
+    <div>
+      <button type="button" class="ghost history-show-all" id="entry-show-all" aria-haspopup="dialog" aria-expanded="false" hidden data-i18n="history.show_all">Show all</button>
+    </div>
+</div>
+
+<div class="history-sheet" data-history-sheet hidden>
+  <button type="button" class="history-sheet-backdrop" data-history-sheet-close aria-label="Close history" data-i18n-aria-label="history.close_history"></button>
+  <div class="history-sheet-panel" role="dialog" aria-modal="true" aria-label="All entries" data-i18n-aria-label="history.all_entries">
+    <div class="history-sheet-header">
+      <h3 data-i18n="history.all_entries">All entries</h3>
+      <button type="button" class="btn_icon primary" data-history-sheet-close aria-label="Close" data-i18n-aria-label="history.close">
+        <img src="/static/icons/cross.svg" alt="" />
+      </button>
+    </div>
+    <div class="history-sheet-list">
+      <div class="cells-group" id="entry-list-all"></div>
+    </div>
+  </div>
+</div>

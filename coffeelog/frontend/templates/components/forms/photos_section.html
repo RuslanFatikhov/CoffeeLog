@@ -1,6 +1,7 @@
 <section class="form-section  p16 gap8 vstack">
 
-  <label class="muted" for="photos">Add photos (max 5, JPEG/PNG/HEIF)</label>
+  <label class="muted" for="photos" data-i18n="form.photos_hint">Add photos (max 5, JPEG/PNG/HEIF)</label>
+  <button type="button" class="primary-invert" data-photo-picker-open data-i18n="form.add_photos">Add photos</button>
   <input
     id="photos"
     name="photos"
@@ -8,6 +9,7 @@
     accept="image/jpeg,image/png,image/heif,image/heic,.heif,.heic"
     multiple
     capture="environment"
+    hidden
   />
   
   <div id="photo-preview" class="photo-grid" aria-live="polite"></div>

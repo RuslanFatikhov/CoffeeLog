@@ -1,7 +1,13 @@
 <section class="form-section">
   <div class="p16 vstack gap8">
+    <label for="language-select" data-i18n="settings.language">Language</label>
+    <select id="language-select" data-language-select>
+      <option value="en" data-i18n="settings.language_en">English</option>
+      <option value="ru" data-i18n="settings.language_ru">Russian</option>
+    </select>
+    <p><strong data-i18n="settings.app_version">App version:</strong> {{ app_version }}</p>
     <form method="post" action="/logout">
-      <button type="submit" class="fs 24 w100 primary-invert ">Logout</button>
+      <button type="submit" class="fs 24 w100 primary-invert " data-i18n="settings.logout">Logout</button>
     </form>
   </div>
 </section>

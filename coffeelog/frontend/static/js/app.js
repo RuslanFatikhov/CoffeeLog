@@ -1,4 +1,5 @@
 import { deleteEntry, getAllEntries, getEntry, getUnsyncedEntries, putEntries, putEntry } from "#idb";
+import { applyTranslations, getLanguage, setLanguage, t } from "/static/js/i18n.js";
 
 const APP_VERSION = document.documentElement.dataset.appVersion || "0.1";
 const APP_VERSION_KEY = "coffeelog_app_version";
@@ -12,20 +13,18 @@ const BREW_METHOD_ICONS = {
   "French Press": "/static/icons/brew-method/french-press.png",
   Cupping: "/static/icons/brew-method/cupping.png",
 };
-const GRIND_OPTIONS = ["Fine", "Medium", "Coarse"];
 const RANDOM_COFFEE_PREFIXES = ["Morning", "Velvet", "Sunrise", "Roaster's", "Caramel", "Midnight", "Cloud", "Cocoa"];
 const RANDOM_COFFEE_SUFFIXES = ["Blend", "Brew", "Espresso", "Cup", "Roast", "Drip", "V60", "Shot"];
+const HISTORY_PREVIEW_LIMIT = 5;
 const MAX_PHOTOS = 5;
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const ALLOWED_PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/heif", "image/heic"]);
-const TASTE_TAGS_ENDPOINT = `/static/data/taste_tags.json?v=${encodeURIComponent(APP_VERSION)}`;
+const COUNTRIES_ENDPOINT_BASE = "/static/data/countries";
 
 let deferredInstallPrompt = null;
+let countriesCache = null;
 
 function normalizeEntry(entry) {
-  if (entry && entry.yield == null && entry.yield_amount != null) {
-    return { ...entry, yield: entry.yield_amount };
-  }
   return entry;
 }
 
@@ -52,97 +51,273 @@ function parseListInput(value) {
     .filter(Boolean);
 }
 
-function normalizeTagValue(value) {
-  return String(value || "").trim().toLowerCase();
-}
-
-function setListInputValue(inputEl, values) {
-  inputEl.value = values.join(", ");
-  inputEl.dispatchEvent(new Event("input", { bubbles: true }));
-}
-
-function syncTasteChipActiveState(inputEl, chipContainer) {
-  const selected = new Set(parseListInput(inputEl.value).map(normalizeTagValue));
-  chipContainer.querySelectorAll(".taste-chip").forEach((chip) => {
-    const isActive = selected.has(normalizeTagValue(chip.dataset.tasteValue));
-    chip.classList.toggle("active", isActive);
-  });
-}
-
-function ensureTasteChip(inputEl, chipContainer, value) {
-  const cleaned = String(value || "").trim();
-  const normalized = normalizeTagValue(cleaned);
-  if (!normalized || normalized === "none") return;
-
-  const exists = Array.from(chipContainer.querySelectorAll(".taste-chip")).some(
-    (chip) => normalizeTagValue(chip.dataset.tasteValue) === normalized
-  );
-  if (exists) return;
-
-  const chip = document.createElement("button");
-  chip.type = "button";
-  chip.className = "taste-chip";
-  chip.dataset.tasteValue = cleaned;
-  chip.textContent = cleaned;
-  chip.addEventListener("click", () => addTasteValueToInput(inputEl, cleaned));
-  chipContainer.appendChild(chip);
-}
-
-function syncTasteChipsFromInput(inputEl, chipContainer, includeLastSegment = false) {
-  const raw = String(inputEl.value || "");
-  let parts = raw.split(",");
-  if (!includeLastSegment && !raw.trim().endsWith(",")) {
-    parts = parts.slice(0, -1);
+async function initCreateFlavorWheel(form) {
+  const viewportEl = form.querySelector("[data-create-wheel-viewport]");
+  const svgEl = form.querySelector("[data-create-wheel-svg]");
+  const rootEl = form.querySelector("[data-create-wheel-root]");
+  const selectedLabelEl = form.querySelector("[data-create-wheel-selected-label]");
+  const centerFocusEl = form.querySelector("[data-create-wheel-center-focus]");
+  const centerFocusTextEl = form.querySelector("[data-create-wheel-center-focus-text]");
+  const flavorInput = form.elements.namedItem("flavor_wheel");
+  if (!viewportEl || !svgEl || !rootEl || !selectedLabelEl || !centerFocusEl || !centerFocusTextEl || !flavorInput) {
+    return;
   }
-  parts
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .forEach((value) => ensureTasteChip(inputEl, chipContainer, value));
-}
 
-function addTasteValueToInput(inputEl, value) {
-  const current = parseListInput(inputEl.value);
-  const normalized = normalizeTagValue(value);
-  const exists = current.some((item) => normalizeTagValue(item) === normalized);
-
-  const nextValues = exists
-    ? current.filter((item) => normalizeTagValue(item) !== normalized)
-    : [...current, value];
-
-  setListInputValue(inputEl, nextValues);
-  inputEl.focus();
-}
-
-function buildTasteChips(form, fieldName, values) {
-  const inputEl = form.elements.namedItem(fieldName);
-  const chipContainer = form.querySelector(`[data-taste-chips-for="${fieldName}"]`);
-  if (!inputEl || !chipContainer || !Array.isArray(values)) return;
-
-  chipContainer.innerHTML = "";
-  values.forEach((value) => ensureTasteChip(inputEl, chipContainer, value));
-
-  inputEl.addEventListener("input", () => {
-    syncTasteChipsFromInput(inputEl, chipContainer, false);
-    syncTasteChipActiveState(inputEl, chipContainer);
-  });
-  inputEl.addEventListener("blur", () => {
-    syncTasteChipsFromInput(inputEl, chipContainer, true);
-    syncTasteChipActiveState(inputEl, chipContainer);
-  });
-  syncTasteChipActiveState(inputEl, chipContainer);
-}
-
-async function initTasteChips(form) {
   try {
-    const response = await fetch(TASTE_TAGS_ENDPOINT);
-    if (!response.ok) return;
-    const tags = await response.json();
-    ["aroma", "flavor", "aftertaste", "defects"].forEach((fieldName) => {
-      buildTasteChips(form, fieldName, tags[fieldName]);
+    const [{ getWheelSegments }, { WheelController }] = await Promise.all([
+      import("/static/js/wheel.data.js"),
+      import("/static/js/wheel.controller.js"),
+    ]);
+    const result = await getWheelSegments();
+    const segments = Array.isArray(result?.segments) ? result.segments : [];
+    if (segments.length === 0) return;
+
+    const controller = new WheelController({
+      viewportEl,
+      svgEl,
+      rootEl,
+      selectedLabelEl,
+      centerFocusEl,
+      centerFocusTextEl,
+      data: segments,
+      // Wheel center position in SVG space: lower X pushes center further left (stronger crop).
+      centerX: -500,
+      // Vertical offset of the whole wheel group inside viewport.
+      centerY: 400,
+      // Global wheel size multiplier (all ring radii scale together).
+      radiusScale: 4,
+      // Rotation sensitivity for mouse wheel / trackpad scroll.
+      scrollSpeed: 0.085,
+      // Rotation sensitivity for vertical drag/touch move.
+      dragSpeed: 0.28,
+      onSelectionChange: (selectedEntries) => {
+        flavorInput.value = selectedEntries.map((entry) => entry.label).join(", ");
+      },
     });
+
+    controller.init();
+    const initialValues = parseListInput(flavorInput.value);
+    if (initialValues.length > 0) {
+      controller.setSelectedByLabels(initialValues);
+    }
   } catch (_error) {
-    // ignore missing taste tag dictionary
+    selectedLabelEl.textContent = t("wheel.unavailable", "Wheel unavailable");
   }
+}
+
+function normalizeCountryList(payload) {
+  const source = Array.isArray(payload) ? payload : Array.isArray(payload?.countries) ? payload.countries : [];
+  return source
+    .map((item) => {
+      if (typeof item === "string") {
+        const name = item.trim();
+        return name ? { shortName: "🌍", fullName: name } : null;
+      }
+      const shortName = String(
+        item?.["short-name"] ?? item?.short_name ?? item?.shortName ?? item?.flag ?? "🌍"
+      ).trim();
+      const fullName = String(
+        item?.["full-name"] ?? item?.full_name ?? item?.fullName ?? item?.name ?? ""
+      ).trim();
+      if (!fullName) return null;
+      return {
+        shortName: shortName || "🌍",
+        fullName,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.fullName.localeCompare(b.fullName, undefined, { sensitivity: "base" }));
+}
+
+async function loadCountries() {
+  if (Array.isArray(countriesCache)) return countriesCache;
+  const lang = getLanguage();
+  const localizedEndpoint = `${COUNTRIES_ENDPOINT_BASE}.${lang}.json?v=${encodeURIComponent(APP_VERSION)}`;
+  const fallbackEndpoint = `${COUNTRIES_ENDPOINT_BASE}.en.json?v=${encodeURIComponent(APP_VERSION)}`;
+  const legacyEndpoint = `${COUNTRIES_ENDPOINT_BASE}.json?v=${encodeURIComponent(APP_VERSION)}`;
+
+  const fetchCountries = async (url) => {
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const payload = await response.json();
+    return normalizeCountryList(payload);
+  };
+
+  try {
+    countriesCache =
+      (await fetchCountries(localizedEndpoint)) ??
+      (lang !== "en" ? await fetchCountries(fallbackEndpoint) : null) ??
+      (await fetchCountries(legacyEndpoint)) ??
+      [];
+    return countriesCache;
+  } catch (_error) {
+    countriesCache = [];
+    return countriesCache;
+  }
+}
+
+function mergeOriginValue(country, details) {
+  const countryText = String(country || "").trim();
+  const detailsText = String(details || "").trim();
+  if (!countryText) return detailsText;
+  if (!detailsText) return countryText;
+  const lowerDetails = detailsText.toLowerCase();
+  const lowerCountry = countryText.toLowerCase();
+  if (lowerDetails === lowerCountry || lowerDetails.startsWith(`${lowerCountry},`)) {
+    return detailsText;
+  }
+  return `${countryText}, ${detailsText}`;
+}
+
+function splitOriginValue(rawOrigin, countries) {
+  const origin = String(rawOrigin || "").trim();
+  if (!origin || !Array.isArray(countries) || countries.length === 0) {
+    return { country: "", details: origin };
+  }
+  const lowerOrigin = origin.toLowerCase();
+  const countryNames = countries
+    .map((country) => String(country?.fullName || "").trim())
+    .filter(Boolean);
+  const byLength = countryNames.sort((a, b) => b.length - a.length);
+  for (const normalizedCountry of byLength) {
+    if (!normalizedCountry) continue;
+    const lowerCountry = normalizedCountry.toLowerCase();
+    if (lowerOrigin === lowerCountry) {
+      return { country: normalizedCountry, details: "" };
+    }
+    if (lowerOrigin.startsWith(`${lowerCountry},`)) {
+      return {
+        country: normalizedCountry,
+        details: origin.slice(normalizedCountry.length + 1).trimStart(),
+      };
+    }
+  }
+  return { country: "", details: origin };
+}
+
+function initOriginCountryPicker(form, countries) {
+  const countryInput = form.elements.namedItem("origin_country");
+  const openBtn = form.querySelector("[data-origin-sheet-open]");
+  const openLabel = form.querySelector("[data-origin-country-label]");
+  const sheet = form.querySelector("[data-origin-sheet]");
+  const sheetPanel = form.querySelector(".origin-sheet-panel");
+  const searchInput = form.querySelector("[data-origin-country-search]");
+  const listEl = form.querySelector("[data-origin-country-list]");
+  if (
+    !countryInput ||
+    !openBtn ||
+    !openLabel ||
+    !sheet ||
+    !sheetPanel ||
+    !searchInput ||
+    !listEl ||
+    !Array.isArray(countries)
+  ) {
+    return;
+  }
+
+  const closeButtons = Array.from(form.querySelectorAll("[data-origin-sheet-close]"));
+  const countriesByName = new Map(countries.map((country) => [country.fullName, country]));
+  let closeTimerId = null;
+
+  const updateSelectedState = () => {
+    const selectedName = String(countryInput.value || "").trim();
+    const selectedCountry = countriesByName.get(selectedName) || null;
+    openLabel.textContent = selectedCountry?.shortName || "🌍";
+    openBtn.setAttribute(
+      "aria-label",
+      selectedCountry
+        ? t("form.selected_country", `Selected country: ${selectedCountry.fullName}`, { country: selectedCountry.fullName })
+        : t("form.select_country", "Select country")
+    );
+  };
+
+  const renderCountryList = (queryText = "") => {
+    const query = String(queryText || "")
+      .trim()
+      .toLowerCase();
+    const filtered = query
+      ? countries.filter((country) => country.fullName.toLowerCase().includes(query))
+      : countries;
+
+    listEl.innerHTML = "";
+    if (filtered.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.textContent = t("countries.empty", "No countries found.");
+      listEl.appendChild(empty);
+      return;
+    }
+
+    filtered.forEach((country) => {
+      const option = document.createElement("button");
+      option.type = "button";
+      option.className = "origin-country-option";
+      option.innerHTML = `<span class="origin-country-flag">${country.shortName}</span><span>${country.fullName}</span>`;
+      option.addEventListener("click", () => {
+        countryInput.value = country.fullName;
+        updateSelectedState();
+        closeSheet();
+      });
+      listEl.appendChild(option);
+    });
+  };
+
+  const closeSheet = () => {
+    if (sheet.hidden || sheet.classList.contains("is-closing")) return;
+    sheet.classList.remove("is-open");
+    sheet.classList.add("is-closing");
+    openBtn.setAttribute("aria-expanded", "false");
+
+    const finalizeClose = () => {
+      sheet.hidden = true;
+      sheet.classList.remove("is-closing");
+      closeTimerId = null;
+    };
+
+    const onTransitionEnd = () => {
+      sheetPanel.removeEventListener("transitionend", onTransitionEnd);
+      finalizeClose();
+    };
+
+    sheetPanel.addEventListener("transitionend", onTransitionEnd);
+    closeTimerId = window.setTimeout(() => {
+      sheetPanel.removeEventListener("transitionend", onTransitionEnd);
+      finalizeClose();
+    }, 260);
+  };
+
+  const openSheet = () => {
+    if (closeTimerId) {
+      window.clearTimeout(closeTimerId);
+      closeTimerId = null;
+    }
+    sheet.hidden = false;
+    sheet.classList.remove("is-closing");
+    renderCountryList("");
+    searchInput.value = "";
+    window.requestAnimationFrame(() => {
+      sheet.classList.add("is-open");
+      searchInput.focus();
+    });
+    openBtn.setAttribute("aria-expanded", "true");
+  };
+
+  openBtn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    openSheet();
+  });
+  closeButtons.forEach((button) => button.addEventListener("click", closeSheet));
+  searchInput.addEventListener("input", () => {
+    renderCountryList(searchInput.value);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !sheet.hidden) {
+      closeSheet();
+    }
+  });
+
+  updateSelectedState();
 }
 
 function stringifyList(value) {
@@ -166,7 +341,8 @@ function fillSelect(selectEl, options) {
   options.forEach((value) => {
     const option = document.createElement("option");
     option.value = value;
-    option.textContent = value;
+    const optionKey = `option.${String(value).trim().toLowerCase().replace(/\s+/g, "_")}`;
+    option.textContent = t(optionKey, value);
     selectEl.appendChild(option);
   });
 }
@@ -185,7 +361,7 @@ function initBrewMethodPicker(form) {
 
   const updateSelectedState = () => {
     const value = (brewMethodInput.value || "").trim();
-    selectedLabel.textContent = value || "Select";
+    selectedLabel.textContent = value || t("common.select", "Select");
     openBtn.dataset.hasValue = value ? "true" : "false";
   };
 
@@ -232,7 +408,8 @@ function initBrewMethodPicker(form) {
     btn.type = "button";
     btn.className = "brew-method-option";
     btn.dataset.value = methodName;
-    btn.innerHTML = `<img src="${BREW_METHOD_ICONS[methodName]}" alt="" /><span>${methodName}</span>`;
+    const methodKey = `option.${String(methodName).trim().toLowerCase().replace(/\s+/g, "_")}`;
+    btn.innerHTML = `<img src="${BREW_METHOD_ICONS[methodName]}" alt="" /><span>${t(methodKey, methodName)}</span>`;
     btn.addEventListener("click", () => {
       brewMethodInput.value = methodName;
       updateSelectedState();
@@ -285,7 +462,8 @@ function initBrewTimePicker(form) {
     };
   };
 
-  const formatLabel = (minutes, seconds) => `${minutes} min ${seconds} sec`;
+  const formatLabel = (minutes, seconds) =>
+    `${minutes} ${t("form.min_short", "min")} ${seconds} ${t("form.sec_short", "sec")}`;
 
   const updateDisplay = () => {
     brewTimeInput.value = `${toTwoDigits(minutesValue)}:${toTwoDigits(secondsValue)}`;
@@ -295,7 +473,7 @@ function initBrewTimePicker(form) {
   const updateLabelFromInput = () => {
     const raw = String(brewTimeInput.value || "").trim();
     if (!raw) {
-      label.textContent = "Select min/sec";
+      label.textContent = t("common.select_min_sec", "Select min/sec");
       return;
     }
     const parsed = parseTimeValue(raw);
@@ -438,6 +616,7 @@ function initMetricPicker(form) {
   const arcEl = form.querySelector("[data-metric-arc]");
   const viewportEl = form.querySelector("[data-metric-viewport]");
   const trackEl = form.querySelector("[data-metric-track]");
+  const presetsEl = form.querySelector("[data-metric-presets]");
   const applyBtn = form.querySelector("[data-metric-apply]");
   const closeButtons = Array.from(form.querySelectorAll("[data-metric-close]"));
   if (
@@ -495,6 +674,20 @@ function initMetricPicker(form) {
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
   const snapToStep = (value, config) =>
     clamp(Math.round((value - config.min) / config.step) * config.step + config.min, config.min, config.max);
+  const parsePresetNumbers = (value) =>
+    String(value || "")
+      .split(",")
+      .map((item) => Number(item.trim()))
+      .filter((item) => Number.isFinite(item));
+  const equalWithStepTolerance = (a, b, decimals) => {
+    const precision = Math.max(1e-6, 10 ** (-(decimals + 1)));
+    return Math.abs(a - b) <= precision;
+  };
+  const formatPresetLabel = (value, unit, decimals) => {
+    const rendered = formatValue(value, decimals);
+    if (!unit) return rendered;
+    return unit.startsWith("°") ? `${rendered}${unit}` : `${rendered} ${unit}`;
+  };
 
   const isMajorTick = (tickIndex, config) => tickIndex % config.majorStepInterval === 0;
 
@@ -547,12 +740,12 @@ function initMetricPicker(form) {
     if (!config) return;
     const raw = String(config.input.value || "").trim();
     if (!raw) {
-      config.label.textContent = "Select";
+      config.label.textContent = t("common.select", "Select");
       return;
     }
     const numeric = parseNumber(raw);
     if (numeric == null) {
-      config.label.textContent = "Select";
+      config.label.textContent = t("common.select", "Select");
       return;
     }
     const rendered = formatValue(numeric, config.decimals);
@@ -600,6 +793,37 @@ function initMetricPicker(form) {
     displayUnitEl.textContent = config.unit;
     editorEl.value = rendered;
     updateScaleVisual();
+    if (presetsEl) {
+      presetsEl.querySelectorAll(".metric-preset-chip").forEach((chip) => {
+        const chipValue = parseNumber(chip.dataset.metricPresetValue);
+        const isActive = chipValue != null && equalWithStepTolerance(chipValue, draftValue, config.decimals);
+        chip.classList.toggle("active", isActive);
+        chip.setAttribute("aria-pressed", isActive ? "true" : "false");
+      });
+    }
+  };
+
+  const renderPresetChips = (config) => {
+    if (!presetsEl) return;
+    presetsEl.innerHTML = "";
+    const presets = Array.isArray(config?.presets) ? config.presets : [];
+    if (presets.length === 0) {
+      presetsEl.hidden = true;
+      return;
+    }
+    presetsEl.hidden = false;
+    presets.forEach((value) => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "metric-preset-chip";
+      chip.dataset.metricPresetValue = String(value);
+      chip.textContent = formatPresetLabel(value, config.unit, config.decimals);
+      chip.addEventListener("click", () => {
+        draftValue = value;
+        renderDraft();
+      });
+      presetsEl.appendChild(chip);
+    });
   };
 
   const openSheet = (field) => {
@@ -627,6 +851,7 @@ function initMetricPicker(form) {
 
     sheet.hidden = false;
     sheet.classList.remove("is-closing");
+    renderPresetChips(config);
     renderDraft();
     window.requestAnimationFrame(() => {
       sheet.classList.add("is-open");
@@ -651,7 +876,21 @@ function initMetricPicker(form) {
     const step = parseNumber(cell.dataset.metricStep) ?? 1;
     const defaultValue = parseNumber(cell.dataset.metricDefault) ?? min;
     const unit = cell.dataset.metricUnit || "";
-    const title = cell.dataset.metricLabel || "Value";
+    const titleKey = cell.dataset.metricLabelKey || "";
+    const titleFallback = cell.dataset.metricLabel || "Value";
+    const title = titleKey ? t(titleKey, titleFallback) : titleFallback;
+    const presetsRaw = parsePresetNumbers(cell.dataset.metricQuickPresets);
+    const presetConfig = { min, max, step };
+    const presets = Array.from(
+      new Set(
+        presetsRaw.map((value) => {
+          const normalized = snapToStep(value, presetConfig);
+          return formatValue(normalized, decimalPlaces(step));
+        })
+      )
+    )
+      .map((value) => parseNumber(value))
+      .filter((value) => value != null);
 
     const majorTickEvery = parseNumber(cell.dataset.metricMajor) ?? step * 5;
     const majorStepIntervalRaw = majorTickEvery / step;
@@ -669,6 +908,7 @@ function initMetricPicker(form) {
       defaultValue,
       unit,
       title,
+      presets,
       majorTickEvery,
       majorStepInterval,
       decimals: decimalPlaces(step),
@@ -896,7 +1136,10 @@ function setupCreateStepper(form) {
     if (prevBtn) {
       const isFirst = currentStep === 0;
       prevBtn.dataset.mode = isFirst ? "close" : "back";
-      prevBtn.setAttribute("aria-label", isFirst ? "Close create" : "Previous step");
+      prevBtn.setAttribute(
+        "aria-label",
+        isFirst ? t("create.close", "Close create") : t("create.prev_step", "Previous step")
+      );
 
       const chevronIcon = prevBtn.querySelector("[data-prev-chevron]");
       const closeIcon = prevBtn.querySelector("[data-prev-close]");
@@ -908,7 +1151,10 @@ function setupCreateStepper(form) {
     if (nextBtn) nextBtn.hidden = isLast;
     if (submitBtn) submitBtn.hidden = !isLast;
 
-    const title = screens[currentStep]?.dataset.stepTitle || "";
+    const currentScreen = screens[currentStep];
+    const titleKey = currentScreen?.dataset.stepTitleKey || "";
+    const fallbackTitle = currentScreen?.dataset.stepTitle || "";
+    const title = titleKey ? t(titleKey, fallbackTitle) : fallbackTitle;
     if (indicator) indicator.textContent = title;
     if (heading) heading.textContent = title;
 
@@ -986,7 +1232,7 @@ function readAsDataURL(blob) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(reader.error || new Error("Could not read file"));
+    reader.onerror = () => reject(reader.error || new Error(t("create.photo_read_failed", "Could not read file")));
     reader.readAsDataURL(blob);
   });
 }
@@ -1001,7 +1247,7 @@ function loadImageElementFromFile(file) {
     };
     image.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error("Unsupported image format in this browser"));
+      reject(new Error(t("create.photo_format_unsupported", "Unsupported image format in this browser")));
     };
     image.src = url;
   });
@@ -1022,7 +1268,7 @@ async function compressToMaxSize(file, maxBytes) {
   const source = await getDrawableImage(file);
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
-  if (!context) throw new Error("Canvas is not supported");
+  if (!context) throw new Error(t("create.canvas_not_supported", "Canvas is not supported"));
 
   let width = source.width || 0;
   let height = source.height || 0;
@@ -1030,7 +1276,7 @@ async function compressToMaxSize(file, maxBytes) {
   let blob = null;
 
   try {
-    if (!width || !height) throw new Error("Invalid image dimensions");
+    if (!width || !height) throw new Error(t("create.invalid_image_dimensions", "Invalid image dimensions"));
 
     for (let attempt = 0; attempt < 14; attempt += 1) {
       canvas.width = Math.max(1, Math.round(width));
@@ -1039,7 +1285,7 @@ async function compressToMaxSize(file, maxBytes) {
       context.drawImage(source, 0, 0, canvas.width, canvas.height);
 
       blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
-      if (!blob) throw new Error("Image encoding failed");
+      if (!blob) throw new Error(t("create.image_encoding_failed", "Image encoding failed"));
       if (blob.size <= maxBytes) return blob;
 
       if (quality > 0.45) {
@@ -1053,7 +1299,7 @@ async function compressToMaxSize(file, maxBytes) {
     if (typeof source.close === "function") source.close();
   }
 
-  throw new Error("Could not compress image to 2 MB");
+  throw new Error(t("create.compress_failed", "Could not compress image to 2 MB"));
 }
 
 function renderPhotoPreview(dataUrls) {
@@ -1072,13 +1318,13 @@ function renderPhotoPreview(dataUrls) {
 
 async function processSelectedPhotos(files) {
   if (files.length > MAX_PHOTOS) {
-    throw new Error(`Maximum ${MAX_PHOTOS} photos allowed`);
+    throw new Error(t("create.max_photos", `Maximum ${MAX_PHOTOS} photos allowed`, { count: MAX_PHOTOS }));
   }
 
   const output = [];
   for (const file of files) {
     if (!isAllowedPhoto(file)) {
-      throw new Error("Only JPEG, PNG, and HEIF photos are allowed");
+      throw new Error(t("create.allowed_photo_types", "Only JPEG, PNG, and HEIF photos are allowed"));
     }
 
     if (file.size <= MAX_IMAGE_BYTES) {
@@ -1104,7 +1350,7 @@ async function mergeWithLocalEntry(entry) {
 
 async function syncEntries(messageEl) {
   if (!navigator.onLine) {
-    showMessage(messageEl, "Offline — saved locally.", "warn");
+    showMessage(messageEl, t("sync.offline_saved", "Offline - saved locally."), "warn");
     return;
   }
 
@@ -1143,32 +1389,59 @@ async function syncEntries(messageEl) {
     const remoteMerged = await Promise.all(remote.map((entry) => mergeWithLocalEntry(entry)));
     await putEntries(remoteMerged);
 
-    showMessage(messageEl, "Sync complete.", "ok");
+    showMessage(messageEl, t("sync.complete", "Sync complete."), "ok");
 
     if (location.pathname === "/") {
       await renderEntryList();
     }
   } catch (_error) {
-    showMessage(messageEl, "Server unavailable. Entries remain local.", "warn");
+    showMessage(messageEl, t("sync.server_unavailable", "Server unavailable. Entries remain local."), "warn");
   }
 }
 
 async function renderEntryList() {
   const listEl = document.getElementById("entry-list");
+  const fullListEl = document.getElementById("entry-list-all");
+  const showAllBtn = document.getElementById("entry-show-all");
+  const historySheet = document.querySelector("[data-history-sheet]");
+  const historySheetPanel = document.querySelector(".history-sheet-panel");
+  const historyCloseButtons = Array.from(document.querySelectorAll("[data-history-sheet-close]"));
   if (!listEl) return;
 
-  const entries = await getAllEntries();
-  listEl.innerHTML = "";
+  const closeHistorySheet = () => {
+    if (!historySheet || historySheet.hidden || historySheet.classList.contains("is-closing")) return;
+    historySheet.classList.remove("is-open");
+    historySheet.classList.add("is-closing");
 
-  if (entries.length === 0) {
-    const empty = document.createElement("div");
-    empty.className = "empty";
-    empty.textContent = "No entries yet. Create your first coffee log.";
-    listEl.appendChild(empty);
-    return;
-  }
+    const finalizeClose = () => {
+      historySheet.hidden = true;
+      historySheet.classList.remove("is-closing");
+      if (showAllBtn) showAllBtn.setAttribute("aria-expanded", "false");
+    };
 
-  entries.forEach((entry) => {
+    const onTransitionEnd = () => {
+      historySheetPanel?.removeEventListener("transitionend", onTransitionEnd);
+      finalizeClose();
+    };
+
+    historySheetPanel?.addEventListener("transitionend", onTransitionEnd);
+    window.setTimeout(() => {
+      historySheetPanel?.removeEventListener("transitionend", onTransitionEnd);
+      finalizeClose();
+    }, 260);
+  };
+
+  const openHistorySheet = () => {
+    if (!historySheet) return;
+    historySheet.hidden = false;
+    historySheet.classList.remove("is-closing");
+    window.requestAnimationFrame(() => {
+      historySheet.classList.add("is-open");
+    });
+    if (showAllBtn) showAllBtn.setAttribute("aria-expanded", "true");
+  };
+
+  const buildEntryCard = (entry) => {
     const card = document.createElement("a");
     card.className = "card";
     card.href = `/view?id=${encodeURIComponent(entry.id)}`;
@@ -1181,8 +1454,58 @@ async function renderEntryList() {
 
     card.appendChild(title);
     card.appendChild(meta1);
-    listEl.appendChild(card);
+    return card;
+  };
+
+  const entries = await getAllEntries();
+  listEl.innerHTML = "";
+  if (fullListEl) fullListEl.innerHTML = "";
+
+  if (entries.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = t("history.empty_start", "Start your coffee journey");
+    listEl.appendChild(empty);
+    if (showAllBtn) {
+      showAllBtn.hidden = true;
+      showAllBtn.setAttribute("aria-expanded", "false");
+    }
+    closeHistorySheet();
+    return;
+  }
+
+  entries.slice(0, HISTORY_PREVIEW_LIMIT).forEach((entry) => {
+    listEl.appendChild(buildEntryCard(entry));
   });
+
+  if (fullListEl) {
+    entries.forEach((entry) => {
+      fullListEl.appendChild(buildEntryCard(entry));
+    });
+  }
+
+  const shouldShowAll = entries.length > HISTORY_PREVIEW_LIMIT;
+  if (showAllBtn) {
+    showAllBtn.hidden = !shouldShowAll;
+    if (!showAllBtn.dataset.bound) {
+      showAllBtn.dataset.bound = "true";
+      showAllBtn.addEventListener("click", openHistorySheet);
+    }
+  }
+
+  if (!shouldShowAll) {
+    closeHistorySheet();
+  }
+
+  if (historyCloseButtons.length > 0 && !document.body.dataset.historySheetBound) {
+    document.body.dataset.historySheetBound = "true";
+    historyCloseButtons.forEach((button) => button.addEventListener("click", closeHistorySheet));
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && historySheet && !historySheet.hidden) {
+        closeHistorySheet();
+      }
+    });
+  }
 }
 
 async function handleCreateSubmit(event) {
@@ -1192,7 +1515,7 @@ async function handleCreateSubmit(event) {
   const submitBtn = form.querySelector("[data-step-submit]");
 
   if (submitBtn && submitBtn.hidden) {
-    showMessage(messageEl, "Use Next to complete all steps before saving.", "warn");
+    showMessage(messageEl, t("create.complete_steps", "Use Next to complete all steps before saving."), "warn");
     return;
   }
 
@@ -1205,7 +1528,7 @@ async function handleCreateSubmit(event) {
   try {
     photos = await processSelectedPhotos(photoFiles);
   } catch (error) {
-    showMessage(messageEl, error.message || "Photo processing failed.", "warn");
+    showMessage(messageEl, error.message || t("create.photo_processing_failed", "Photo processing failed."), "warn");
     return;
   }
 
@@ -1220,24 +1543,22 @@ async function handleCreateSubmit(event) {
     brew_date: form.brew_date.value || toLocalDateTimeInputValue(),
     coffee_name: finalCoffeeName,
     roastery: form.roastery.value.trim(),
-    origin: form.origin.value.trim(),
+    origin: mergeOriginValue(form.origin_country?.value, form.origin.value),
     process: form.process.value || null,
     brew_method: form.brew_method.value || null,
-    grind_size: form.grind_size.value || null,
     water_temp: numericValue(form.water_temp.value),
     dose: numericValue(form.dose.value),
-    yield: numericValue(form.yield.value),
     brew_time: form.brew_time.value.trim(),
-    aroma: parseListInput(form.aroma.value),
-    flavor: parseListInput(form.flavor.value),
-    aftertaste: parseListInput(form.aftertaste.value),
+    aroma: [],
+    flavor: parseListInput(form.flavor_wheel?.value),
+    aftertaste: [],
     acidity: ratingValue(form.acidity.value),
     sweetness: ratingValue(form.sweetness.value),
     bitterness: ratingValue(form.bitterness.value),
     body: ratingValue(form.body.value),
     balance: ratingValue(form.balance.value),
     overall: ratingValue(form.overall.value),
-    defects: parseListInput(form.defects.value),
+    defects: [],
     notes: form.notes.value.trim(),
     photos: finalPhotos,
     synced: false,
@@ -1246,9 +1567,9 @@ async function handleCreateSubmit(event) {
   await putEntry(entry);
 
   if (!navigator.onLine) {
-    showMessage(messageEl, "Offline — saved locally.", "warn");
+    showMessage(messageEl, t("sync.offline_saved", "Offline - saved locally."), "warn");
   } else {
-    showMessage(messageEl, "Saved locally.", "ok");
+    showMessage(messageEl, t("create.saved_local", "Saved locally."), "ok");
   }
 
   setTimeout(() => {
@@ -1259,9 +1580,10 @@ async function handleCreateSubmit(event) {
 async function initCreatePage() {
   const form = document.getElementById("create-form");
   if (!form) return;
+  const photoPickerOpenBtn = form.querySelector("[data-photo-picker-open]");
 
   fillSelect(form.process, PROCESS_OPTIONS);
-  fillSelect(form.grind_size, GRIND_OPTIONS);
+  const countries = await loadCountries();
 
   const params = new URLSearchParams(window.location.search);
   const editId = params.get("id");
@@ -1290,18 +1612,15 @@ async function initCreatePage() {
     form.coffee_name.value = editEntry.coffee_name || "";
     form.brew_date.value = toDateTimeLocalValue(editEntry.brew_date);
     form.roastery.value = editEntry.roastery || "";
-    form.origin.value = editEntry.origin || "";
+    const parsedOrigin = splitOriginValue(editEntry.origin || "", countries);
+    form.origin_country.value = parsedOrigin.country || "";
+    form.origin.value = parsedOrigin.details || "";
     form.process.value = editEntry.process || "";
     form.brew_method.value = editEntry.brew_method || "";
-    form.grind_size.value = editEntry.grind_size || "";
     form.water_temp.value = editEntry.water_temp != null ? String(editEntry.water_temp) : "";
     form.dose.value = editEntry.dose != null ? String(editEntry.dose) : "";
-    form.yield.value = (editEntry.yield ?? editEntry.yield_amount) != null ? String(editEntry.yield ?? editEntry.yield_amount) : "";
     form.brew_time.value = editEntry.brew_time || "";
-    form.aroma.value = Array.isArray(editEntry.aroma) ? editEntry.aroma.join(", ") : "";
-    form.flavor.value = Array.isArray(editEntry.flavor) ? editEntry.flavor.join(", ") : "";
-    form.aftertaste.value = Array.isArray(editEntry.aftertaste) ? editEntry.aftertaste.join(", ") : "";
-    form.defects.value = Array.isArray(editEntry.defects) ? editEntry.defects.join(", ") : "";
+    form.flavor_wheel.value = Array.isArray(editEntry.flavor) ? editEntry.flavor.join(", ") : "";
     form.notes.value = editEntry.notes || "";
     form.acidity.value = editEntry.acidity || 0;
     form.sweetness.value = editEntry.sweetness || 0;
@@ -1311,10 +1630,11 @@ async function initCreatePage() {
     form.overall.value = editEntry.overall || 0;
   }
 
+  initOriginCountryPicker(form, countries);
   initBrewMethodPicker(form);
   initBrewTimePicker(form);
   initMetricPicker(form);
-  await initTasteChips(form);
+  await initCreateFlavorWheel(form);
   initRatingSliders(form);
 
   if (!editEntry) {
@@ -1323,6 +1643,11 @@ async function initCreatePage() {
     renderPhotoPreview(editEntry.photos.slice(0, MAX_PHOTOS));
   }
   setupCreateStepper(form);
+  if (photoPickerOpenBtn && form.photos) {
+    photoPickerOpenBtn.addEventListener("click", () => {
+      form.photos.click();
+    });
+  }
   if (form.photos) {
     form.photos.addEventListener("change", async () => {
       const messageEl = document.getElementById("create-message");
@@ -1330,13 +1655,13 @@ async function initCreatePage() {
 
       if (files.length > MAX_PHOTOS) {
         renderPhotoPreview([]);
-        showMessage(messageEl, `Maximum ${MAX_PHOTOS} photos allowed.`, "warn");
+        showMessage(messageEl, t("create.max_photos", `Maximum ${MAX_PHOTOS} photos allowed.`, { count: MAX_PHOTOS }), "warn");
         return;
       }
 
       if (files.some((file) => !isAllowedPhoto(file))) {
         renderPhotoPreview([]);
-        showMessage(messageEl, "Only JPEG, PNG, and HEIF photos are allowed.", "warn");
+        showMessage(messageEl, t("create.allowed_photo_types", "Only JPEG, PNG, and HEIF photos are allowed."), "warn");
         return;
       }
 
@@ -1345,17 +1670,173 @@ async function initCreatePage() {
         renderPhotoPreview(previews);
       } catch (_error) {
         renderPhotoPreview([]);
-        showMessage(messageEl, "Could not preview selected photos.", "warn");
+        showMessage(messageEl, t("create.photo_preview_failed", "Could not preview selected photos."), "warn");
       }
     });
   }
   form.addEventListener("submit", handleCreateSubmit);
 }
 
+function hashStringToInt(value) {
+  let hash = 2166136261;
+  const text = String(value || "");
+  for (let i = 0; i < text.length; i += 1) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function seededRandom(seedValue) {
+  let state = hashStringToInt(seedValue) || 1;
+  return () => {
+    state ^= state << 13;
+    state ^= state >>> 17;
+    state ^= state << 5;
+    return ((state >>> 0) % 10000) / 10000;
+  };
+}
+
+function fallbackColorFromLabel(label) {
+  const hue = hashStringToInt(label) % 360;
+  return `hsl(${hue} 62% 58%)`;
+}
+
+function clamp01(value) {
+  return Math.min(1, Math.max(0, value));
+}
+
+function normalizeFivePoint(value, fallback = 3) {
+  const n = Number(value);
+  const safe = Number.isFinite(n) ? n : fallback;
+  return clamp01((safe - 1) / 4);
+}
+
+function buildPolygonClipPath(corners, rand) {
+  const safeCorners = Math.max(3, Math.round(corners));
+  const points = [];
+  const step = (Math.PI * 2) / safeCorners;
+  const start = rand() * Math.PI * 2;
+  for (let i = 0; i < safeCorners; i += 1) {
+    const angle = start + i * step;
+    const radius = 40 + rand() * 18;
+    const x = 50 + Math.cos(angle) * radius;
+    const y = 50 + Math.sin(angle) * radius;
+    points.push(`${x.toFixed(1)}% ${y.toFixed(1)}%`);
+  }
+  return `polygon(${points.join(",")})`;
+}
+
+async function resolveFlavorPalette(flavorLabels) {
+  const normalized = Array.isArray(flavorLabels)
+    ? flavorLabels.map((item) => String(item || "").trim().toLowerCase()).filter(Boolean)
+    : [];
+  if (normalized.length === 0) return [];
+
+  try {
+    const { getWheelSegments } = await import("/static/js/wheel.data.js");
+    const result = await getWheelSegments();
+    const segments = Array.isArray(result?.segments) ? result.segments : [];
+    const colorByLabel = new Map();
+    segments.forEach((segment) => {
+      if (!segment?.selectable) return;
+      const key = String(segment.label || "").trim().toLowerCase();
+      if (!key) return;
+      colorByLabel.set(key, segment.color || fallbackColorFromLabel(key));
+    });
+
+    const resolved = normalized.map((label) => colorByLabel.get(label) || fallbackColorFromLabel(label));
+    return Array.from(new Set(resolved));
+  } catch (_error) {
+    return Array.from(new Set(normalized.map((label) => fallbackColorFromLabel(label))));
+  }
+}
+
+async function renderEntryFlavorArt(artEl, entry) {
+  if (!artEl) return;
+  artEl.innerHTML = "";
+
+  const flavorLabels = Array.isArray(entry?.flavor) ? entry.flavor : [];
+  if (flavorLabels.length === 0) {
+    artEl.hidden = true;
+    return;
+  }
+
+  const palette = await resolveFlavorPalette(flavorLabels);
+  if (palette.length === 0) {
+    artEl.hidden = true;
+    return;
+  }
+
+  artEl.hidden = false;
+  const rand = seededRandom(`${entry?.id || "entry"}:${palette.join("|")}`);
+  const acidityNorm = normalizeFivePoint(entry?.acidity, 3);
+  const bitternessNorm = normalizeFivePoint(entry?.bitterness, 3);
+  const aromaNorm = normalizeFivePoint(entry?.balance ?? entry?.aroma, 3);
+  const sweetnessNorm = normalizeFivePoint(entry?.sweetness, 3);
+  const bodyNorm = normalizeFivePoint(entry?.body, 3);
+
+  const minDistancePx = 12 + acidityNorm * 62;
+  const cornersCount = Math.round(3 + bitternessNorm * 7);
+  const cornerRoundness = 4 + aromaNorm * 44;
+  const rotationBias = -70 + sweetnessNorm * 140;
+  const scaleFactor = 0.72 + bodyNorm * 0.78;
+
+  const width = Math.max(220, artEl.clientWidth || 0);
+  const height = Math.max(120, artEl.clientHeight || 0);
+  const placed = [];
+
+  for (let i = 0; i < palette.length; i += 1) {
+    const shape = document.createElement("span");
+    shape.className = "entry-flavor-shape";
+
+    const size = (30 + rand() * 74) * scaleFactor;
+    const margin = size * 0.55 + 4;
+    let xPx = margin + rand() * Math.max(1, width - margin * 2);
+    let yPx = margin + rand() * Math.max(1, height - margin * 2);
+
+    for (let attempts = 0; attempts < 64; attempts += 1) {
+      const candidateX = margin + rand() * Math.max(1, width - margin * 2);
+      const candidateY = margin + rand() * Math.max(1, height - margin * 2);
+      const ok = placed.every((point) => {
+        const dx = candidateX - point.x;
+        const dy = candidateY - point.y;
+        return Math.hypot(dx, dy) >= minDistancePx;
+      });
+      if (ok) {
+        xPx = candidateX;
+        yPx = candidateY;
+        break;
+      }
+    }
+
+    placed.push({ x: xPx, y: yPx });
+
+    const x = (xPx / width) * 100;
+    const y = (yPx / height) * 100;
+    const rotate = rotationBias + (-26 + rand() * 52);
+    const color = palette[i];
+    const opacity = 0.24 + rand() * 0.52;
+    const polygon = buildPolygonClipPath(cornersCount, rand);
+
+    shape.style.setProperty("--shape-size", `${size.toFixed(1)}px`);
+    shape.style.setProperty("--shape-x", `${x.toFixed(1)}%`);
+    shape.style.setProperty("--shape-y", `${y.toFixed(1)}%`);
+    shape.style.setProperty("--shape-rotate", `${rotate.toFixed(1)}deg`);
+    shape.style.setProperty("--shape-radius", `${cornerRoundness.toFixed(1)}%`);
+    shape.style.setProperty("--shape-color", color);
+    shape.style.setProperty("--shape-opacity", opacity.toFixed(2));
+    shape.style.clipPath = polygon;
+
+    artEl.appendChild(shape);
+  }
+}
+
 async function initViewPage() {
   const details = document.getElementById("entry-details");
   if (!details) return;
   const detailsList = details.querySelector("[data-entry-details-list]");
+  const flavorArtEl = details.querySelector("[data-entry-flavor-art]");
   const photoBlock = details.querySelector("[data-entry-photos]");
   const photoSlider = details.querySelector("[data-entry-photo-slider]");
   const editBtn = document.querySelector("[data-entry-edit]");
@@ -1365,7 +1846,7 @@ async function initViewPage() {
   const id = params.get("id");
 
   if (!id) {
-    details.innerHTML = '<div class="empty">Missing entry id.</div>';
+    details.innerHTML = `<div class="empty">${t("entry.missing_id", "Missing entry id.")}</div>`;
     return;
   }
 
@@ -1388,9 +1869,11 @@ async function initViewPage() {
   }
 
   if (!entry) {
-    details.innerHTML = '<div class="empty">Entry not found locally.</div>';
+    details.innerHTML = `<div class="empty">${t("entry.not_found_local", "Entry not found locally.")}</div>`;
     return;
   }
+
+  await renderEntryFlavorArt(flavorArtEl, entry);
 
   if (editBtn && entry.id) {
     editBtn.addEventListener("click", () => {
@@ -1400,7 +1883,7 @@ async function initViewPage() {
 
   if (deleteBtn && entry.id) {
     deleteBtn.addEventListener("click", async () => {
-      const confirmed = window.confirm("Delete this entry?");
+      const confirmed = window.confirm(t("view.confirm_delete", "Delete this entry?"));
       if (!confirmed) return;
 
       deleteBtn.disabled = true;
@@ -1425,7 +1908,7 @@ async function initViewPage() {
 
   const currentHeading = document.getElementById("create-heading");
   if (currentHeading) {
-    const titleText = (entry.coffee_name || "").trim() || "Entry Details";
+    const titleText = (entry.coffee_name || "").trim() || t("view.entry_details", "Entry Details");
     if (currentHeading.tagName === "H3") {
       currentHeading.textContent = titleText;
     } else {
@@ -1444,10 +1927,8 @@ async function initViewPage() {
       origin: entry.origin || "-",
       process: entry.process || "-",
       brew_method: entry.brew_method || "-",
-      grind_size: entry.grind_size || "-",
-      water_temp: entry.water_temp != null ? `${entry.water_temp} C` : "-",
+      water_temp: entry.water_temp != null ? `${entry.water_temp} °C` : "-",
       dose: entry.dose != null ? `${entry.dose} g` : "-",
-      yield: (entry.yield ?? entry.yield_amount) != null ? `${entry.yield ?? entry.yield_amount} g` : "-",
       brew_time: entry.brew_time || "-",
       aroma: stringifyList(entry.aroma),
       flavor: stringifyList(entry.flavor),
@@ -1483,7 +1964,7 @@ async function initViewPage() {
       photos.forEach((url, index) => {
         const image = document.createElement("img");
         image.src = url;
-        image.alt = `Coffee photo ${index + 1}`;
+        image.alt = `${t("form.photo", "Coffee photo")} ${index + 1}`;
         image.className = "photo-slide";
         photoSlider.appendChild(image);
       });
@@ -1532,7 +2013,7 @@ function initOnlineStatus() {
   if (!statusEl) return;
 
   const update = () => {
-    statusEl.textContent = navigator.onLine ? "Online" : "Offline";
+    statusEl.textContent = navigator.onLine ? t("status.online", "Online") : t("status.offline", "Offline");
   };
 
   window.addEventListener("online", update);
@@ -1609,6 +2090,14 @@ function registerServiceWorker() {
 async function initSettingsPage() {
   const userKeyEl = document.getElementById("user-key");
   if (userKeyEl) userKeyEl.textContent = ensureUserKey();
+
+  const languageSelect = document.querySelector("[data-language-select]");
+  if (!languageSelect) return;
+  languageSelect.value = getLanguage();
+  languageSelect.addEventListener("change", () => {
+    setLanguage(languageSelect.value);
+    applyTranslations(document);
+  });
 }
 
 async function initListPage() {
@@ -1616,6 +2105,8 @@ async function initListPage() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  setLanguage(getLanguage());
+  applyTranslations(document);
   await applyAppVersion();
   ensureUserKey();
   registerServiceWorker();

@@ -1,0 +1,116 @@
+.primary {
+  background: var(--white100);
+  color: var(--black100);
+  border-radius: var(--spacer-48);
+  border: none;
+  padding: var(--spacer-24);
+  height: var(--spacer-48);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacer-4);
+}
+
+.primary-invert {
+  background: var(--black100);
+  color: var(--white100);
+  border-radius: var(--spacer-48);
+  border: none;
+  padding: var(--spacer-24);
+  height: var(--spacer-48);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacer-4);
+}
+
+.primary img,
+.primary-invert img {
+  width: var(--spacer-24);
+  height: var(--spacer-24);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--black100);
+  border-radius: var(--spacer-48);
+  border: none;
+  padding: var(--spacer-24);
+  height: var(--spacer-48);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacer-4);
+  font-size: var(--spacer-16);
+}
+
+.create-step-submit {
+  width: 130px !important;
+}
+
+.install-banner {
+  width: calc(100vw - 32px);
+  height: var(--spacer-54);
+  position: fixed;
+  bottom: 120px;
+  margin-left: var(--spacer-16);
+  margin-right: var(--spacer-16);
+  background-color: var(--accent);
+  border: none;
+  display: none;
+}
+
+.service_button{
+  display: flex;
+  flex-direction: column;
+  width: 100px;
+  height: 100px;
+  background-color: var(--surface);
+  border-radius: var(--spacer-16);
+  border: none;
+  position: relative;
+  justify-content: flex-end;
+}
+
+.service_button img{
+  position: absolute;
+  width: 100px;
+  height: 80px;
+  object-fit: contain;
+  top: -20px;
+  left: 0;
+}
+
+.entry-edit-btn {
+  min-width: 96px;
+  padding: 0 var(--spacer-16);
+}
+
+.entry-delete-btn {
+  width: 100%;
+  color: var(--danger);
+}
+
+.btn_icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--spacer-48) !important;
+  height: var(--spacer-48) !important;
+}
+
+.btn_icon img {
+  width: var(--spacer-24) !important;
+  height: var(--spacer-24) !important;
+}
+
+.icon-text {
+  font-size: 2rem;
+  line-height: 1;
+  font-weight: 300;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

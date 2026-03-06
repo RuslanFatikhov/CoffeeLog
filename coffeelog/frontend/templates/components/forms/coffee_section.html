@@ -1,29 +1,59 @@
 <section class="form-section">
   <div class="form-grid">
     <div class="form-cell">
-      <label for="coffee_name">Coffee name</label>
+      <label for="coffee_name" data-i18n="form.coffee_name">Coffee name</label>
       <input id="coffee_name" name="coffee_name" />
     </div>
 
     <div class="form-cell">
-      <label for="brew_date">Date & time</label>
+      <label for="brew_date" data-i18n="form.brew_date">Date & time</label>
       <input id="brew_date" name="brew_date" type="datetime-local" step="60" />
     </div>
 
     <div class="form-cell">
-      <label for="roastery">Roastery</label>
+      <label for="roastery" data-i18n="form.roastery">Roastery</label>
       <input id="roastery" name="roastery" />
     </div>
 
     <div class="form-cell">
-      <label for="origin">Origin</label>
-      <input id="origin" name="origin" />
+      <label for="origin" data-i18n="form.origin">Origin</label>
+      <div class="origin-combo">
+        <input id="origin_country" name="origin_country" type="hidden" />
+        <button
+          type="button"
+          class="origin-country-trigger"
+          data-origin-sheet-open
+          aria-haspopup="dialog"
+          aria-expanded="false"
+          aria-label="Select country"
+          data-i18n-aria-label="form.select_country"
+        >
+          <span data-origin-country-label>🌍</span>
+        </button>
+        <input id="origin" name="origin" placeholder="Region, farm, lot" data-i18n-placeholder="form.origin_placeholder" />
+      </div>
+
+      <div class="origin-sheet" data-origin-sheet hidden>
+        <button type="button" class="origin-sheet-backdrop" data-origin-sheet-close aria-label="Close country picker" data-i18n-aria-label="form.close_country_picker"></button>
+        <div class="origin-sheet-panel" role="dialog" aria-modal="true" aria-label="Select country" data-i18n-aria-label="form.select_country">
+          <div class="origin-sheet-header">
+            <h3 data-i18n="form.select_country_title">Select Country</h3>
+            <button type="button" class="btn_icon primary" data-origin-sheet-close aria-label="Close" data-i18n-aria-label="history.close">
+              <img src="/static/icons/cross.svg" alt="" />
+            </button>
+          </div>
+          <div class="p16">
+            <input type="search" class="search_input" placeholder="Search country..." data-origin-country-search data-i18n-placeholder="form.search_country" />
+          </div>
+          <div class="origin-country-list" data-origin-country-list></div>
+        </div>
+      </div>
     </div>
 
     <div class="form-cell">
-      <label for="process">Process</label>
+      <label for="process" data-i18n="form.process">Process</label>
       <select id="process" name="process">
-        <option value="">Select</option>
+        <option value="" data-i18n="common.select">Select</option>
       </select>
     </div>
 

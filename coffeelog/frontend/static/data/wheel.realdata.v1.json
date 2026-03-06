@@ -1,0 +1,360 @@
+{
+  "meta": {
+    "id": "coffee-flavor-wheel-v1",
+    "version": "1.0.0",
+    "rings": [
+      { "name": "category", "innerR": 70, "outerR": 170 },
+      { "name": "subcategory", "innerR": 170, "outerR": 290 },
+      { "name": "flavor", "innerR": 290, "outerR": 310 }
+    ],
+    "defaultWeight": 1
+  },
+  "tree": [
+    {
+      "id": "fruity",
+      "label": "Fruity",
+      "color": "#DA1D23",
+      "children": [
+        {
+          "id": "berry",
+          "label": "Berry",
+          "color": "#DD4C51",
+          "children": [
+            { "id": "strawberry", "label": "Strawberry", "color": "#EF2D36", "weight": 1 },
+            { "id": "raspberry", "label": "Raspberry", "color": "#E52968", "weight": 1 },
+            { "id": "blueberry", "label": "Blueberry", "color": "#6469B0", "weight": 1 },
+            { "id": "blackberry", "label": "Blackberry", "color": "#3E0317", "weight": 1 },
+            { "id": "currant", "label": "Currant", "color": "#7A1E3A", "weight": 1 },
+            { "id": "cranberry", "label": "Cranberry", "color": "#B31237", "weight": 1 }
+          ]
+        },
+        {
+          "id": "citrus",
+          "label": "Citrus",
+          "color": "#F7A129",
+          "children": [
+            { "id": "orange", "label": "Orange", "color": "#E2631E", "weight": 1 },
+            { "id": "mandarin", "label": "Mandarin", "color": "#FF8A00", "weight": 1 },
+            { "id": "lemon", "label": "Lemon", "color": "#FDE402", "weight": 1 },
+            { "id": "lime", "label": "Lime", "color": "#7EB138", "weight": 1 },
+            { "id": "grapefruit", "label": "Grapefruit", "color": "#F26355", "weight": 1 }
+          ]
+        },
+        {
+          "id": "stone-fruit",
+          "label": "Stone fruit",
+          "color": "#F68A5C",
+          "children": [
+            { "id": "peach", "label": "Peach", "color": "#F68A5C", "weight": 1 },
+            { "id": "apricot", "label": "Apricot", "color": "#FFB35A", "weight": 1 },
+            { "id": "plum", "label": "Plum", "color": "#7A3B8F", "weight": 1 },
+            { "id": "cherry", "label": "Cherry", "color": "#E73451", "weight": 1 }
+          ]
+        },
+        {
+          "id": "tropical",
+          "label": "Tropical",
+          "color": "#F89A1C",
+          "children": [
+            { "id": "pineapple", "label": "Pineapple", "color": "#F89A1C", "weight": 1 },
+            { "id": "mango", "label": "Mango", "color": "#FFB000", "weight": 1 },
+            { "id": "passion-fruit", "label": "Passion fruit", "color": "#FF7A1A", "weight": 1 },
+            { "id": "papaya", "label": "Papaya", "color": "#FF9E6A", "weight": 1 },
+            { "id": "coconut", "label": "Coconut", "color": "#D07C36", "weight": 1 }
+          ]
+        },
+        {
+          "id": "dried-fruit",
+          "label": "Dried fruit",
+          "color": "#C94A44",
+          "children": [
+            { "id": "raisin", "label": "Raisin", "color": "#B53B54", "weight": 1 },
+            { "id": "date", "label": "Date", "color": "#8C4A2F", "weight": 1 },
+            { "id": "fig", "label": "Fig", "color": "#6B2B3A", "weight": 1 },
+            { "id": "prune", "label": "Prune", "color": "#A5446F", "weight": 1 }
+          ]
+        },
+        {
+          "id": "other-fruit",
+          "label": "Other fruit",
+          "color": "#F2684C",
+          "children": [
+            { "id": "apple", "label": "Apple", "color": "#4EB947", "weight": 1 },
+            { "id": "pear", "label": "Pear", "color": "#BAA635", "weight": 1 },
+            { "id": "grape", "label": "Grape", "color": "#AEB92C", "weight": 1 },
+            { "id": "melon", "label": "Melon", "color": "#BCE06A", "weight": 1 },
+            { "id": "pomegranate", "label": "Pomegranate", "color": "#E65656", "weight": 1 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "floral",
+      "label": "Floral",
+      "color": "#F15BB5",
+      "children": [
+        {
+          "id": "flowers",
+          "label": "Flowers",
+          "color": "#FF7BD1",
+          "children": [
+            { "id": "jasmine", "label": "Jasmine", "color": "#C7E9FF", "weight": 1 },
+            { "id": "rose", "label": "Rose", "color": "#FF4FA0", "weight": 1 },
+            { "id": "lavender", "label": "Lavender", "color": "#9B7BFF", "weight": 1 },
+            { "id": "orange-blossom", "label": "Orange blossom", "color": "#FFD6F0", "weight": 1 },
+            { "id": "chamomile", "label": "Chamomile", "color": "#FFD66B", "weight": 1 }
+          ]
+        },
+        {
+          "id": "tea-like",
+          "label": "Tea-like",
+          "color": "#9EE493",
+          "children": [
+            { "id": "black-tea", "label": "Black tea", "color": "#4B2E2B", "weight": 1 },
+            { "id": "oolong", "label": "Oolong", "color": "#6B5B2A", "weight": 1 },
+            { "id": "green-tea", "label": "Green tea", "color": "#2F7D4F", "weight": 1 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sweet",
+      "label": "Sweet",
+      "color": "#FFB703",
+      "children": [
+        {
+          "id": "sugary",
+          "label": "Sugary",
+          "color": "#FDE402",
+          "children": [
+            { "id": "honey", "label": "Honey", "color": "#F4A261", "weight": 1 },
+            { "id": "caramel", "label": "Caramel", "color": "#E9C46A", "weight": 1 },
+            { "id": "brown-sugar", "label": "Brown sugar", "color": "#C68642", "weight": 1 },
+            { "id": "molasses", "label": "Molasses", "color": "#4A2C2A", "weight": 1 },
+            { "id": "maple-syrup", "label": "Maple syrup", "color": "#B5651D", "weight": 1 }
+          ]
+        },
+        {
+          "id": "vanilla",
+          "label": "Vanilla",
+          "color": "#FFF3B0",
+          "children": [
+            { "id": "vanilla", "label": "Vanilla", "color": "#FFF3B0", "weight": 1 },
+            { "id": "marshmallow", "label": "Marshmallow", "color": "#FFF8E7", "weight": 1 }
+          ]
+        },
+        {
+          "id": "confectionery",
+          "label": "Confectionery",
+          "color": "#FFD166",
+          "children": [
+            { "id": "milk-chocolate", "label": "Milk chocolate", "color": "#7B4B3A", "weight": 1 },
+            { "id": "toffee", "label": "Toffee", "color": "#D8A35D", "weight": 1 },
+            { "id": "nougat", "label": "Nougat", "color": "#F6E7C1", "weight": 1 },
+            { "id": "cookie", "label": "Cookie", "color": "#C89F6A", "weight": 1 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nutty-cocoa",
+      "label": "Nutty / Cocoa",
+      "color": "#7F5539",
+      "children": [
+        {
+          "id": "nuts",
+          "label": "Nuts",
+          "color": "#8D6E63",
+          "children": [
+            { "id": "almond", "label": "Almond", "color": "#CDB891", "weight": 1 },
+            { "id": "hazelnut", "label": "Hazelnut", "color": "#A47148", "weight": 1 },
+            { "id": "peanut", "label": "Peanut", "color": "#B08968", "weight": 1 },
+            { "id": "walnut", "label": "Walnut", "color": "#6F4E37", "weight": 1 },
+            { "id": "pecan", "label": "Pecan", "color": "#7A4E2D", "weight": 1 }
+          ]
+        },
+        {
+          "id": "cocoa",
+          "label": "Cocoa",
+          "color": "#5A3E2B",
+          "children": [
+            { "id": "cocoa", "label": "Cocoa", "color": "#5A3E2B", "weight": 1 },
+            { "id": "dark-chocolate", "label": "Dark chocolate", "color": "#3D1F1A", "weight": 1 },
+            { "id": "chocolate", "label": "Chocolate", "color": "#6B3F2A", "weight": 1 },
+            { "id": "cacao-nibs", "label": "Cacao nibs", "color": "#4B2A1F", "weight": 1 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "spices",
+      "label": "Spices",
+      "color": "#E76F51",
+      "children": [
+        {
+          "id": "brown-spice",
+          "label": "Brown spice",
+          "color": "#C77D5B",
+          "children": [
+            { "id": "cinnamon", "label": "Cinnamon", "color": "#C65A2E", "weight": 1 },
+            { "id": "clove", "label": "Clove", "color": "#5E2B1B", "weight": 1 },
+            { "id": "nutmeg", "label": "Nutmeg", "color": "#8A5A44", "weight": 1 },
+            { "id": "allspice", "label": "Allspice", "color": "#7A4E3A", "weight": 1 },
+            { "id": "anise", "label": "Anise", "color": "#2A9D8F", "weight": 1 }
+          ]
+        },
+        {
+          "id": "peppery",
+          "label": "Peppery",
+          "color": "#6D6875",
+          "children": [
+            { "id": "black-pepper", "label": "Black pepper", "color": "#3A3A3A", "weight": 1 },
+            { "id": "white-pepper", "label": "White pepper", "color": "#DAD7CD", "weight": 1 },
+            { "id": "ginger", "label": "Ginger", "color": "#F4A261", "weight": 1 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "roasted",
+      "label": "Roasted",
+      "color": "#6B2D1A",
+      "children": [
+        {
+          "id": "smoky-burnt",
+          "label": "Smoky / Burnt",
+          "color": "#4A1F12",
+          "children": [
+            { "id": "smoky", "label": "Smoky", "color": "#3A1E14", "weight": 1 },
+            { "id": "ashy", "label": "Ashy", "color": "#6C757D", "weight": 1 },
+            { "id": "burnt-sugar", "label": "Burnt sugar", "color": "#7A3E2A", "weight": 1 },
+            { "id": "charcoal", "label": "Charcoal", "color": "#1F1F1F", "weight": 1 }
+          ]
+        },
+        {
+          "id": "tobacco",
+          "label": "Tobacco",
+          "color": "#8D5A3B",
+          "children": [
+            { "id": "tobacco", "label": "Tobacco", "color": "#8D5A3B", "weight": 1 },
+            { "id": "pipe-tobacco", "label": "Pipe tobacco", "color": "#6F4E37", "weight": 1 },
+            { "id": "cedar", "label": "Cedar", "color": "#9C6644", "weight": 1 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "green-veg",
+      "label": "Green / Vegetative",
+      "color": "#2A9D8F",
+      "children": [
+        {
+          "id": "fresh-green",
+          "label": "Fresh green",
+          "color": "#2F7D4F",
+          "children": [
+            { "id": "herbal", "label": "Herbal", "color": "#2F7D4F", "weight": 1 },
+            { "id": "grass", "label": "Grass", "color": "#6AA84F", "weight": 1 },
+            { "id": "hay", "label": "Hay", "color": "#B7B74A", "weight": 1 },
+            { "id": "green-pea", "label": "Green pea", "color": "#4C956C", "weight": 1 }
+          ]
+        },
+        {
+          "id": "vegetal",
+          "label": "Vegetal",
+          "color": "#40916C",
+          "children": [
+            { "id": "cucumber", "label": "Cucumber", "color": "#52B788", "weight": 1 },
+            { "id": "bell-pepper", "label": "Bell pepper", "color": "#1B9AAA", "weight": 1 },
+            { "id": "tomato-leaf", "label": "Tomato leaf", "color": "#2D6A4F", "weight": 1 }
+          ]
+        },
+        {
+          "id": "under-ripe",
+          "label": "Under-ripe",
+          "color": "#8AC926",
+          "children": [
+            { "id": "unripe-fruit", "label": "Unripe fruit", "color": "#8AC926", "weight": 1 },
+            { "id": "peapod", "label": "Peapod", "color": "#5FAF3B", "weight": 1 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sour-fermented",
+      "label": "Sour / Fermented",
+      "color": "#118AB2",
+      "children": [
+        {
+          "id": "bright-sour",
+          "label": "Bright sour",
+          "color": "#06D6A0",
+          "children": [
+            { "id": "citric", "label": "Citric", "color": "#FDE402", "weight": 1 },
+            { "id": "malic", "label": "Malic", "color": "#94D2BD", "weight": 1 },
+            { "id": "tart", "label": "Tart", "color": "#5BC0EB", "weight": 1 }
+          ]
+        },
+        {
+          "id": "fermented",
+          "label": "Fermented",
+          "color": "#8338EC",
+          "children": [
+            { "id": "winey", "label": "Winey", "color": "#6D597A", "weight": 1 },
+            { "id": "boozy", "label": "Boozy", "color": "#6A4C93", "weight": 1 },
+            { "id": "funky", "label": "Funky", "color": "#5A189A", "weight": 1 },
+            { "id": "overripe", "label": "Overripe", "color": "#9A031E", "weight": 1 }
+          ]
+        },
+        {
+          "id": "acetic",
+          "label": "Acetic / Vinegary",
+          "color": "#F72585",
+          "children": [
+            { "id": "acetic", "label": "Acetic", "color": "#F72585", "weight": 1 },
+            { "id": "vinegar", "label": "Vinegar", "color": "#B5179E", "weight": 1 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "other",
+      "label": "Other",
+      "color": "#6C757D",
+      "children": [
+        {
+          "id": "papery-musty",
+          "label": "Papery / Musty",
+          "color": "#ADB5BD",
+          "children": [
+            { "id": "stale", "label": "Stale", "color": "#8D99AE", "weight": 1 },
+            { "id": "cardboard", "label": "Cardboard", "color": "#A3A380", "weight": 1 },
+            { "id": "woody", "label": "Woody", "color": "#7F5539", "weight": 1 },
+            { "id": "musty", "label": "Musty", "color": "#6B705C", "weight": 1 },
+            { "id": "moldy", "label": "Moldy", "color": "#4A4E69", "weight": 1 }
+          ]
+        },
+        {
+          "id": "chemical",
+          "label": "Chemical",
+          "color": "#577590",
+          "children": [
+            { "id": "medicinal", "label": "Medicinal", "color": "#277DA1", "weight": 1 },
+            { "id": "rubber", "label": "Rubber", "color": "#22223B", "weight": 1 },
+            { "id": "petroleum", "label": "Petroleum", "color": "#1D3557", "weight": 1 },
+            { "id": "phenolic", "label": "Phenolic", "color": "#5E6472", "weight": 1 }
+          ]
+        },
+        {
+          "id": "salty-bitter",
+          "label": "Salty / Bitter",
+          "color": "#495057",
+          "children": [
+            { "id": "salty", "label": "Salty", "color": "#6C757D", "weight": 1 },
+            { "id": "bitter", "label": "Bitter", "color": "#343A40", "weight": 1 }
+          ]
+        }
+      ]
+    }
+  ]
+}

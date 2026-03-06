@@ -1,10 +1,10 @@
 {
-  "name": "CoffeeLog",
-  "short_name": "CoffeeLog",
+  "name": "Sipp",
+  "short_name": "Sipp",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#f7f4ef",
+  "background_color": "#334CDB",
   "theme_color": "#72513a",
   "icons": [
     {
